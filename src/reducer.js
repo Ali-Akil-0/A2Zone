@@ -1,5 +1,6 @@
 export const initialState = {
   basket: [],
+  user: null,
 };
 //selector
 export const getBasketTotal = (basket) => {
@@ -36,6 +37,14 @@ export const reducer = (state, action) => {
         // action.itle => the new itme
         // the new table will containt the old + the new
         basket: newBasket,
+      };
+    case "ADD_USER":
+      return {
+        ...state,
+        // ...state.basket => whateever the basket was before
+        // action.itle => the new itme
+        // the new table will containt the old + the new
+        user: action.user,
       };
 
     default:

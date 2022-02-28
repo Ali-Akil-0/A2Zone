@@ -5,7 +5,7 @@ import CheckoutProduct from "./CheckoutProduct";
 import Subtotal from "./Subtotal";
 
 const Checkout = () => {
-  const [{ basket }, dispatch] = useStateValue();
+  const [{ basket, user }, dispatch] = useStateValue();
 
   return (
     <div className="checkout">
@@ -16,6 +16,7 @@ const Checkout = () => {
           src="https://images-eu.ssl-images-amazon.com/images/G/31/img19/AmazonPay/PrimeRewards/LP_Revamp/PC_Header_Banner._CB468631809_.jpg"
         />
         <div>
+          <h3>Hello {user ? user.email : "Guest"}</h3>
           <h2 className="checkout__title">Your shopping Basket</h2>
           {/* CheckoutProduct */}
           {basket?.map((item) => (
