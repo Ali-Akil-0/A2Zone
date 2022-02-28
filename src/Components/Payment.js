@@ -1,5 +1,6 @@
 import React from "react";
-import { Link, Navigate } from "react-router-dom";
+import { Link } from "react-router-dom";
+import { useNavigate } from "react-router";
 import { useStateValue } from "../StateProvider";
 import CheckoutProduct from "./CheckoutProduct";
 import { useStripe, useElements, CardElement } from "@stripe/react-stripe-js";
@@ -10,61 +11,61 @@ import CurrencyFormat from "react-currency-format";
 import { getBasketTotal } from "../reducer";
 import { useEffect } from "react";
 import axios from "../axios";
+import { Elements } from "@stripe/react-stripe-js";
 
 const Payment = () => {
+  const navigate = useNavigate();
   const stripe = useStripe();
   const elements = useElements();
   const [error, setError] = useState(null);
   const [disabled, setDisable] = useState(true);
   const [processing, setProcessing] = useState("");
   const [succeeded, setSucceeded] = useState(false);
-  const [clientSecret, setClientSecret] = useState();
+  const [clientSecret, setClientSecret] = useState(true);
 
   const [{ basket, user }, dispatch] = useStateValue();
-  useEffect(() => {
-    // generate stripe secret
-    const getClientSecret = async () => {
-      // const response = await axios();
-      // stripe expects the payments is subcurrencies
-      const respose = await axios({
-        method: "post",
-        url: `/payment/create?total=${getBasketTotal(basket) * 100}`,
-      });
-      setClientSecret(respose.data.clientSecret);
-    };
-    getClientSecret();
-  }, [basket]);
+  const [orders, setOrders] = useState(false);
+  useEffect(
+    (options = { clientSecret }) => {
+      if (orders === true) {
+        navigate("/orders", { replace: true });
+      }
+      // generate stripe secret
+      const getClientSecret = async () => {
+        // const response = await axios();
+        // stripe expects the payments is subcurrencies
+        const respose = await axios({
+          method: "post",
+          url: `/payment/create?total=${getBasketTotal(basket) * 100}`,
+        });
+        setClientSecret(respose.data.clientSecret);
+      };
+      getClientSecret();
+    },
+    [basket, orders]
+  );
+  if (clientSecret !== true) {
+    console.log("The client secret is : ", clientSecret);
+  }
+
   const handleSubmit = async (event) => {
     // We don't want to let default form submission happen here,
     // which would refresh the page.
     event.preventDefault();
     setProcessing(true);
-
-    if (!stripe || !elements) {
-      // Stripe.js has not yet loaded.
-      // Make sure to disable form submission until Stripe.js has loaded.
-      return;
-    }
-
-    const result = await stripe
-      .confirmPayment({
-        //`Elements` instance that was used to create the Payment Element
-        elements,
-        confirmParams: {
-          return_url: { clientSecret },
+    const payload = await stripe
+      .confirmCardPayment(clientSecret, {
+        payment__method: {
+          card: elements.getElement(CardElement),
         },
       })
-      .then(({ PaymentIntent }) => {
+      .then(({ paymentIntent }) => {
         setSucceeded(true);
         setError(null);
         setProcessing(false);
-        Navigate.replace("/orders");
+        setOrders(true);
+        console.log("when ?");
       });
-
-    if (result.error) {
-      console.log(result.error.message);
-    } else {
-    }
   };
   const handleChange = (e) => {
     setDisable(e.empty);
@@ -128,7 +129,10 @@ const Payment = () => {
                     </>
                   )}
                 />
-                <button disabled={processing || disabled || succeeded}>
+                <button
+                  type="submit"
+                  disabled={processing || disabled || succeeded}
+                >
                   <span>{processing ? <p> Processing </p> : "Buy Now"}</span>
                 </button>
               </div>
