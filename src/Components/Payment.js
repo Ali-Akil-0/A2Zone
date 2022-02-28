@@ -3,7 +3,20 @@ import { Link } from "react-router-dom";
 import { useNavigate } from "react-router";
 import { useStateValue } from "../StateProvider";
 import CheckoutProduct from "./CheckoutProduct";
-import { useStripe, useElements, CardElement } from "@stripe/react-stripe-js";
+import {
+  doc,
+  onSnapshot,
+  collection,
+  query,
+  where,
+  addDoc,
+} from "firebase/firestore";
+import {
+  useStripe,
+  useElements,
+  CardElement,
+  PaymentElement,
+} from "@stripe/react-stripe-js";
 import { ElementsConsumer } from "@stripe/react-stripe-js";
 import "./Payment.css";
 import { useState } from "react";
@@ -12,8 +25,13 @@ import { getBasketTotal } from "../reducer";
 import { useEffect } from "react";
 import axios from "../axios";
 import { Elements } from "@stripe/react-stripe-js";
+import { database, db } from "../firebase";
+import { connectDatabaseEmulator, Database, ref, set } from "firebase/database";
 
 const Payment = () => {
+  //   const ref = Database.database(
+  //     "https://a2zone-default-rtdb.europe-west1.firebasedatabase.app"
+  //   );
   const navigate = useNavigate();
   const stripe = useStripe();
   const elements = useElements();
@@ -53,18 +71,32 @@ const Payment = () => {
     // which would refresh the page.
     event.preventDefault();
     setProcessing(true);
-    const payload = await stripe
+
+    stripe
       .confirmCardPayment(clientSecret, {
-        payment__method: {
+        payment_method: {
           card: elements.getElement(CardElement),
         },
       })
       .then(({ paymentIntent }) => {
+        const something = async () => {
+          try {
+            const docRef = await addDoc(collection(db, "users"), {
+              basket: basket,
+              amount: paymentIntent.amount,
+              craeted: paymentIntent.created,
+            });
+            console.log("Document written with ID: ", docRef.id);
+          } catch (e) {
+            console.error("Error adding document: ", e);
+          }
+        };
+        something();
         setSucceeded(true);
         setError(null);
         setProcessing(false);
         setOrders(true);
-        console.log("when ?");
+        console.log("when ?", user?.uid);
       });
   };
   const handleChange = (e) => {
