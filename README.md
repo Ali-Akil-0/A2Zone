@@ -9,12 +9,3 @@
 
 
 
-
-
-
-
-
-
-
-
-![A2zone](https://user-images.githubusercontent.com/71938087/158369724-33622ed8-20dd-4a49-af31-e3574723bfde.gif)
